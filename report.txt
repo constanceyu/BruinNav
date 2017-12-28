@@ -1,0 +1,72 @@
+Faith Yu
+304-652-651
+
+¡ñ implementations in support.h and support.cpp
+bool operator>(const GeoCoord& gc1, const GeoCoord& gc2);
+// defines the > operator between two GeoCoords.
+
+bool operator<(const GeoCoord& gc1, const GeoCoord& gc2);
+// defines the < operator between two GeoCoords.
+
+bool operator==(const GeoCoord& gc1, const GeoCoord& gc2);
+// defines the == operator between two GeoCoords.
+
+bool operator==(const StreetSegment& ss1, const StreetSegment& ss2);
+// defines the == operator between two StreetSegments.
+
+bool operator!=(const StreetSegment& ss1, const StreetSegment& ss2);
+// defines the != operator between two StreetSegments.
+
+std::string getDirection(double angle);
+// returns a string that contains the direction given an angle.
+
+// a useful class that contains all the useful information we need to search for a path and reconstruct the navSegments
+struct NavNode : public GeoCoord
+{
+    // stores the info of where this NavNode came from according to A*
+    StreetSegment* m_cameFrom;
+
+    // this is the streetSegment NavNode is currently on
+    StreetSegment m_currSeg;
+
+    // the GeoCoord this NavNode is on
+    GeoCoord m_geoCoord;
+
+    // For each node, the cost of getting from the start node to that node.
+    double m_gScore;
+
+    // For each node, the total cost of getting from the start node to the goal by passing by that node. That value is partly known, partly heuristic.
+    double m_fScore;    
+                     
+};
+
+
+class Compare
+{
+public:
+    bool operator() (NavNode nav1, NavNode nav2);
+};
+
+
+¡ñ MyMap: associate() and find()
+     -associate(): O(logN)
+	we do comparison and follow the right path until we meet a leaf node, because we eliminate half of the possibilities, we have O(logN). And the insertion is essentially O(1)
+
+     -find(): O(logN)
+	basically the same principle as association(), so we will have the same time complexity of O(logN) in terms of searching, but this time, we just return the value if we find it.
+	¡ñ AttractionMapper: init(), getGeoCoord()
+     - init(): O(N+A*log(A))
+	we use MapLoader's function getSegment to go throguh all N segments in the file, having the time complexity O(N). After getting this segment, we check if it contains attractions. If so, we go through the attractions O(A) it has and associate them one by one with their individual geocoordinates. The association takes O(logN) time. So in total we have O(N+A*log(A)).
+
+     - getGeoCoord() : O(log(A))
+	because we associate attraction names with their corresponding geocoordinates using a binary tree, similar to MyMap's find() function, it has time complexity O(logA)
+¡ñ SegmentMapper: init(), getSegments() 
+     - init(): O((N+A)*log(N+A))
+	This function has several separated parts. Similar to AttractionMapper, it first loops through the maploader and tries to get all StreetSegments, which in total is N, thus having a time complexity O(N). And then we process each streetSegment. we associate the starting GeoCoord and ending Coord with street segments in the map O(logN). No matther the return value was in the map before or not, all that this it does are just O(1) basic operations. Meanwhile, we also need to go through the attractions. Then do the same assigning and association, having a time complexity of O(logA). So in general, we will have O((N+A)*log(N+A)).
+
+     - getSegments() : O(log(A))
+	Same basic idea. Because we have a map that has a GeoCoord as a key and a vector of StreetSegments as return value, we can simple just search through all potentially N+A nodes and return, having O(log(N+A))
+
+¡ñ Navigator: navigate()
+     - navigate() : O((A+N)*log(A+N))
+	search through attraction mapper and determine if the resource and destination are valid O(logA). Then use a priority queue of NavNode, the class we implemented to store all the nearby GeoCoords and other useful informations such as where it came from to the object.
